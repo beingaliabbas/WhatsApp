@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsApp Automation Suite</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in {
+            animation: fadeIn 0.3s ease-out;
+        }
+        .loader {
+            border-top-color: #3B82F6;
+            animation: spinner 1.5s linear infinite;
+        }
+        @keyframes spinner {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .section-card {
+            background: linear-gradient(145deg, #1f2937, #111827);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .dark .section-card {
+            background: linear-gradient(145deg, #2d3748, #1a202c);
+        }
+        .skeleton {
+            background: linear-gradient(90deg, #2d3748 25%, #4a5568 50%, #2d3748 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+    </style>
+</head>
+<body class="bg-gray-900 min-h-screen dark:bg-gray-800">
+    <!-- Notification System -->
+    <div id="notifications" class="fixed top-4 right-4 space-y-2 z-50 w-80">
+        <div id="success-alert" class="hidden p-3 bg-green-800/90 text-green-100 rounded-lg border border-green-600">
+            <i class="fas fa-check-circle mr-2"></i>
+            <span>Message sent successfully!</span>
+        </div>
+        <div id="error-alert" class="hidden p-3 bg-red-800/90 text-red-100 rounded-lg border border-red-600">
+            <i class="fas fa-exclamation-circle mr-2"></i>
+            <span>Failed to send message</span>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <header class="mb-8 flex justify-between items-center">
+            <div>
+                <h1 class="text-3xl font-bold text-indigo-400 dark:text-indigo-300">WhatsApp Automation Suite</h1>
+                <p class="text-gray-400 mt-1 dark:text-gray-300">Professional WhatsApp Automation Solution</p>
+            </div>
+            <div class="flex items-center space-x-4">
+                <button id="theme-toggle" class="text-gray-400 hover:text-white transition-colors">
+                    <i id="theme-icon" class="fas fa-moon"></i>
+                </button>
+                <div id="header-status" class="flex items-center space-x-2">
+                    <div class="w-3 h-3 rounded-full bg-gray-600 pulse"></div>
+                    <span id="status" class="text-gray-300 dark:text-gray-200">Connecting...</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Left Column -->
+            <div class="lg:col-span-1 space-y-6">
+                <!-- Connection Section -->
+                <div class="section-card rounded-xl p-6 shadow-xl fade-in">
+                    <h2 class="text-xl font-semibold text-white dark:text-gray-100 mb-4">Connection Manager</h2>
+                    <div id="qr-code" class="hidden">
+                        <div class="mb-4">
+                            <h3 class="text-gray-300 mb-2 dark:text-gray-200">Scan QR Code</h3>
+                            <div class="relative aspect-square bg-gray-800 rounded-lg overflow-hidden">
+                                <div class="loader absolute inset-0 m-auto ease-linear rounded-full border-4 border-t-4 border-gray-700 h-12 w-12"></div>
+                                <img id="qr-img" class="w-full h-full object-contain hidden" src="" alt="QR Code" />
+                            </div>
+                        </div>
+                        <button onclick="window.location.reload()" class="w-full py-2 px-4 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors">
+                            Refresh Connection
+                        </button>
+                    </div>
+                    <div id="connection-status" class="text-center py-4 hidden">
+                        <div class="text-green-400 mb-2">✅ Connected Successfully</div>
+                        <button id="logout-button" class="text-sm text-red-400 hover:text-red-300 transition-colors">
+                            Disconnect Session
+                        </button>
+                    </div>
+                </div>
+
+                <!-- API Key Section -->
+                <div class="section-card rounded-xl p-6 shadow-xl fade-in">
+                    <h2 class="text-xl font-semibold text-white dark:text-gray-100 mb-4">API Key Management</h2>
+                    <div class="space-y-4">
+                        <input type="password" id="pin-code" 
+                               class="w-full p-3 bg-gray-800 text-white rounded-lg border border-gray-700 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-900" 
+                               placeholder="Enter Security PIN" />
+                        <button id="reveal-api-key" 
+                                class="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition-colors flex items-center justify-center">
+                            Reveal API Key
+                        </button>
+                        <div id="api-key-container" class="hidden mt-4">
+                            <label class="text-gray-300 text-sm dark:text-gray-200">Your API Key:</label>
+                            <div class="mt-1 p-3 bg-gray-800 rounded-lg flex items-center justify-between">
+                                <code id="api-key-value" class="text-indigo-400"></code>
+                                <button onclick="copyToClipboard('api-key-value')" 
+                                        class="text-gray-400 hover:text-white ml-2">
+                                    📋
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Message Form -->
+                <div class="section-card rounded-xl p-6 shadow-xl fade-in">
+                    <h2 class="text-xl font-semibold text-white dark:text-gray-100 mb-4">Message Composer</h2>
+                    <form id="send-message" class="space-y-4">
+                        <div>
+                            <label class="text-gray-300 block mb-2 dark:text-gray-200">Recipient Number</label>
+                            <input type="tel" id="phoneNumber" 
+                                   class="w-full p-3 bg-gray-800 text-white rounded-lg border border-gray-700 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-900" 
+                                   placeholder="+1234567890" 
+                                   required />
+                        </div>
+                        <div>
+                            <label class="text-gray-300 block mb-2 dark:text-gray-200">Message Content</label>
+                            <textarea id="message" 
+                                      class="w-full p-3 bg-gray-800 text-white rounded-lg border border-gray-700 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-900" 
+                                      rows="4" 
+                                      placeholder="Type your message here..." 
+                                      required></textarea>
+                        </div>
+                        <div>
+                            <label class="text-gray-300 block mb-2 dark:text-gray-200">API Key</label>
+                            <input type="text" id="apiKey" 
+                                   class="w-full p-3 bg-gray-800 text-white rounded-lg border border-gray-700 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-900" 
+                                   placeholder="Paste your API key here" 
+                                   required />
+                        </div>
+                        <button type="submit" 
+                                class="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition-colors flex items-center justify-center"
+                                id="send-button">
+                            <span id="send-text">Send Message</span>
+                            <div id="send-spinner" class="hidden loader ease-linear rounded-full border-2 border-t-2 border-gray-200 h-5 w-5 ml-2"></div>
+                        </button>
+                    </form>
+                </div>
+
+                
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        let generatedApiKey = '';
+
+        // DOM Elements
+        const elements = {
+            status: document.getElementById('status'),
+            qrCodeDiv: document.getElementById('qr-code'),
+            connectionStatusDiv: document.getElementById('connection-status'),
+            headerStatusDot: document.querySelector('#header-status div'),
+            qrImg: document.getElementById('qr-img'),
+            phoneNumber: document.getElementById('phoneNumber'),
+            message: document.getElementById('message'),
+            apiKeyInput: document.getElementById('apiKey'),
+            sendButton: document.getElementById('send-button'),
+            sendSpinner: document.getElementById('send-spinner'),
+            sendText: document.getElementById('send-text'),
+            logEntries: document.getElementById('log-entries'),
+            pinCodeInput: document.getElementById('pin-code'),
+            apiKeyContainer: document.getElementById('api-key-container'),
+            apiKeyValue: document.getElementById('api-key-value'),
+            logoutButton: document.getElementById('logout-button'),
+            successAlert: document.getElementById('success-alert'),
+            errorAlert: document.getElementById('error-alert'),
+            themeToggle: document.getElementById('theme-toggle'),
+            themeIcon: document.getElementById('theme-icon'),
+            skeletonLoading: document.getElementById('skeleton-loading')
+        };
+
+        // Theme Toggle
+        elements.themeToggle.addEventListener('click', () => {
+            document.documentElement.classList.toggle('dark');
+            const isDarkMode = document.documentElement.classList.contains('dark');
+            elements.themeIcon.className = isDarkMode ? 'fas fa-sun' : 'fas fa-moon';
+            localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
+        });
+
+        // Load saved theme
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        if (savedTheme === 'dark') {
+            document.documentElement.classList.add('dark');
+            elements.themeIcon.className = 'fas fa-sun';
+        } else {
+            document.documentElement.classList.remove('dark');
+            elements.themeIcon.className = 'fas fa-moon';
+        }
+
+        // Socket Events
+        socket.on('status', (data) => {
+            if (data.ready) {
+                updateConnectionStatus(true);
+                generatedApiKey = data.apiKey;
+            } else {
+                updateConnectionStatus(false);
+            }
+        });
+
+        socket.on('qr', (qrImage) => {
+            handleQrCode(qrImage);
+        });
+
+        // Event Listeners
+        document.getElementById('send-message').addEventListener('submit', sendMessage);
+        document.getElementById('reveal-api-key').addEventListener('click', revealApiKey);
+        elements.logoutButton.addEventListener('click', logout);
+
+        // Functions
+        function updateConnectionStatus(connected) {
+            elements.status.textContent = connected ? 'Connected' : 'Disconnected';
+            elements.headerStatusDot.className = `w-3 h-3 rounded-full ${connected ? 'bg-green-500 pulse' : 'bg-gray-600'}`;
+            elements.qrCodeDiv.classList.toggle('hidden', connected);
+            elements.connectionStatusDiv.classList.toggle('hidden', !connected);
+        }
+
+        function handleQrCode(qrImage) {
+            const qrLoader = elements.qrCodeDiv.querySelector('.loader');
+            elements.qrImg.onload = () => {
+                qrLoader.classList.add('hidden');
+                elements.qrImg.classList.remove('hidden');
+                elements.qrCodeDiv.classList.add('fade-in');
+            };
+            elements.qrImg.src = qrImage;
+            elements.qrCodeDiv.classList.remove('hidden');
+        }
+
+        async function sendMessage(e) {
+            e.preventDefault();
+            
+            const phoneNumber = elements.phoneNumber.value.trim();
+            const message = elements.message.value.trim();
+            const apiKey = elements.apiKeyInput.value.trim();
+
+            if (!validateInputs(phoneNumber, message, apiKey)) return;
+
+            toggleSendButton(true);
+
+            try {
+                const response = await fetch('/send-message', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phoneNumber, message, apiKey })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                handleResponse(data, phoneNumber, message);
+            } catch (error) {
+                handleError(error, phoneNumber, message);
+            } finally {
+                toggleSendButton(false);
+            }
+        }
+
+        function validateInputs(phoneNumber, message, apiKey) {
+            if (!generatedApiKey) {
+                showError('API Key is not available yet.');
+                return false;
+            }
+            if (apiKey !== generatedApiKey) {
+                showError('Invalid API Key');
+                return false;
+            }
+            if (!phoneNumber || !message) {
+                showError('All fields are required');
+                return false;
+            }
+            return true;
+        }
+
+        function toggleSendButton(sending) {
+            elements.sendButton.disabled = sending;
+            elements.sendText.textContent = sending ? 'Sending...' : 'Send Message';
+            elements.sendSpinner.classList.toggle('hidden', !sending);
+        }
+
+        function handleResponse(data, phoneNumber, message) {
+            if (data.success) {
+                showSuccess('Message sent successfully!');
+                addLogEntry({
+                    phoneNumber,
+                    message,
+                    status: 'success',
+                    timestamp: new Date().toLocaleString()
+                });
+            } else {
+                showError(data.message || 'Failed to send message');
+                addLogEntry({
+                    phoneNumber,
+                    message,
+                    status: 'error',
+                    timestamp: new Date().toLocaleString()
+                });
+            }
+        }
+
+        function handleError(error, phoneNumber, message) {
+            console.error('Error:', error);
+            showError('Failed to send message. Check console for details.');
+            addLogEntry({
+                phoneNumber,
+                message: message || 'Message not specified',
+                status: 'error',
+                timestamp: new Date().toLocaleString()
+            });
+        }
+
+        function addLogEntry({ phoneNumber, message, status, timestamp }) {
+            if (!elements.logEntries) return;
+
+            // Hide skeleton loading
+            elements.skeletonLoading.classList.add('hidden');
+
+            const logEntry = document.createElement('div');
+            logEntry.className = `p-3 rounded-lg ${status === 'success' ? 'bg-green-900/20' : 'bg-red-900/20'} fade-in`;
+            logEntry.innerHTML = `
+                <div class="flex justify-between items-center text-sm">
+                    <span class="font-mono">${phoneNumber}</span>
+                    <span class="text-gray-400 text-xs">${timestamp}</span>
+                </div>
+                <div class="mt-2 text-gray-300 text-sm">${message.substring(0, 50)}${message.length > 50 ? '...' : ''}</div>
+                <div class="mt-1 text-right">
+                    <span class="text-xs px-2 py-1 rounded-full ${status === 'success' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}">
+                        ${status.toUpperCase()}
+                    </span>
+                </div>
+            `;
+            elements.logEntries.prepend(logEntry);
+        }
+
+        function showSuccess(message) {
+            elements.successAlert.textContent = message;
+            elements.successAlert.classList.remove('hidden');
+            setTimeout(() => elements.successAlert.classList.add('hidden'), 3000);
+        }
+
+        function showError(message) {
+            elements.errorAlert.textContent = message;
+            elements.errorAlert.classList.remove('hidden');
+            setTimeout(() => elements.errorAlert.classList.add('hidden'), 3000);
+        }
+
+        function revealApiKey() {
+            const pin = elements.pinCodeInput.value.trim();
+            if (pin === '6878') { 
+                elements.apiKeyValue.textContent = generatedApiKey;
+                elements.apiKeyContainer.classList.remove('hidden');
+                // Auto-fill API key in message composer
+                elements.apiKeyInput.value = generatedApiKey;
+            } else {
+                showError('Invalid PIN code');
+            }
+        }
+
+        async function logout() {
+            try {
+                const response = await fetch('/logout', { method: 'POST' });
+                const data = await response.json();
+                if (data.success) {
+                    generatedApiKey = '';
+                    elements.apiKeyContainer.classList.add('hidden');
+                    elements.pinCodeInput.value = '';
+                    showSuccess('Successfully logged out');
+                } else {
+                    showError(data.message || 'Logout failed');
+                }
+            } catch (error) {
+                showError('Logout failed. Check console for details.');
+            }
+        }
+    </script>
+</body>
+</html>
