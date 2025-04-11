@@ -14,7 +14,7 @@ const io = socketIo(server);
 const port = process.env.PORT || 3000;
 
 // ✅ Hardcoded MongoDB URI (LOCAL)
-const MONGO_URI = 'mongodb://aliabbaszounr1:Aliabbas321@cluster1-shard-00-00.rpo2r.mongodb.net:27017,cluster1-shard-00-01.rpo2r.mongodb.net:27017,cluster1-shard-00-02.rpo2r.mongodb.net:27017/whatsapp_sessions?replicaSet=atlas-14bnbx-shard-0&ssl=true&authSource=admin';
+const MONGO_URI = 'mongodb://aliabbaszounr4:Aliabbas321@cluster0-shard-00-00.ze5uw.mongodb.net:27017,cluster0-shard-00-01.ze5uw.mongodb.net:27017,cluster0-shard-00-02.ze5uw.mongodb.net:27017/whatsapp_sessions?replicaSet=atlas-bdpqnp-shard-0&ssl=true&authSource=admin';
 
 // ✅ MongoDB Model for API Key Storage
 const SessionSchema = new mongoose.Schema({
@@ -179,23 +179,33 @@ app.post('/send-message', async (req, res) => {
     }
 });
 
-// ✅ Logout API
 app.post('/logout', async (req, res) => {
     try {
-        await client.destroy();
-        console.log('🚪 Client destroyed.');
+        // Step 1: Destroy the current client session
+        if (client) {
+            await client.destroy();
+            console.log('🚪 Client destroyed.');
+            client = null; // Clear the client instance
+        }
 
+        // Step 2: Clear the whatsapp_sessions collection
+        const result = await mongoose.connection.db.collection('whatsapp_sessions').deleteMany({});
+        console.log('🧹 Cleared whatsapp_sessions collection. Deleted count:', result.deletedCount);
+
+        // Step 3: Update client status
         clientReady = false;
         io.emit('status', { ready: false });
 
+        // Step 4: Delay reinitialization to ensure session is fully cleared
         setTimeout(() => {
             console.log('♻️ Reinitializing client...');
             initializeClient();
-        }, 5000);
+        }, 10000); // Increased delay to 10 seconds
 
+        // Step 5: Send success response
         res.status(200).json({
             success: true,
-            message: '✅ Logged out successfully. Scan QR code again to reconnect.',
+            message: '✅ Logged out successfully. Sessions cleared. Scan QR code again to reconnect.',
         });
     } catch (error) {
         console.error('❌ Error during logout:', error);
