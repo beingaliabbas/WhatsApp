@@ -14,7 +14,7 @@ const io = socketIo(server);
 const port = process.env.PORT || 3000;
 
 // ✅ Hardcoded MongoDB URI (LOCAL)
-const MONGO_URI = 'mongodb://aliabbaszounr1:Aliabbas321@cluster1-shard-00-00.rpo2r.mongodb.net:27017,cluster1-shard-00-01.rpo2r.mongodb.net:27017,cluster1-shard-00-02.rpo2r.mongodb.net:27017/whatsapp_sessions?replicaSet=atlas-14bnbx-shard-0&ssl=true&authSource=admin';
+const MONGO_URI = 'mongodb://aliabbaszounr1:Aliabbas321@cluster1-shard-00-00.rpo2r.mongodb.net:27017,cluster1-shard-00-01.rpo2r.mongodb.net:27017,cluster1-shard-00-02.rpo2r.mongodb.net:27017/whatsapp_sessions_new?replicaSet=atlas-14bnbx-shard-0&ssl=true&authSource=admin';
 
 // ✅ MongoDB Model for API Key Storage
 const SessionSchema = new mongoose.Schema({
