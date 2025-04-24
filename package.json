@@ -17,7 +17,9 @@
   "author": "Ali Abbas",
   "license": "ISC",
   "dependencies": {
+    "dotenv": "^16.4.5",
     "express": "^4.21.2",
+    "express-rate-limit": "^7.0.0",
     "mongoose": "^8.12.1",
     "qrcode": "^1.5.4",
     "socket.io": "^4.8.1",
