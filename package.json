@@ -1,27 +1,31 @@
 {
-  "name": "whatsapp-api",
-  "version": "1.0.0",
-  "description": "WhatsApp Automation API using whatsapp-web.js and MongoDB",
-  "main": "index.js",
-  "scripts": {
-    "start": "node index.js",
-    "dev": "nodemon index.js"
-  },
-  "dependencies": {
-    "crypto": "^1.0.1",
-    "express": "^4.18.2",
-    "express-rate-limit": "^6.0.0",
-    "mongoose": "^7.0.3",
-    "qrcode": "^1.5.0",
-    "socket.io": "^4.7.1",
-    "whatsapp-web.js": "^1.17.2",
-    "dotenv": "^16.0.3",
-    "nodemon": "^2.0.22"
-  },
-  "devDependencies": {},
-  "engines": {
-    "node": ">=16.0.0"
-  },
-  "author": "Ali Abbas",
-  "license": "ISC"
-}
+    "name": "whatsapp-v2",
+    "version": "1.0.0",
+    "description": "WhatsApp Web API integration for session handling and sending messages.",
+    "main": "index.js",
+    "scripts": {
+      "start": "node index.js"
+    },
+    "keywords": [
+      "whatsapp",
+      "nodejs",
+      "express",
+      "api",
+      "socket.io",
+      "wwebjs"
+    ],
+    "author": "Ali Abbas",
+    "license": "ISC",
+    "dependencies": {
+      "express": "^4.21.2",
+      "mongoose": "^8.12.1",
+      "qrcode": "^1.5.4",
+      "socket.io": "^4.8.1",
+      "whatsapp-web.js": "^1.26.0",
+      "wwebjs-mongo": "^1.1.0"
+    },
+    "engines": {
+      "node": ">=22.0.0"
+    }
+  }
+  
