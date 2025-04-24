@@ -14,11 +14,15 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIo(server);
 
+// ✅ Trust proxy for accurate IP detection
+app.set('trust proxy', 1);
+
 const port = process.env.PORT || 3000;
 const MONGO_URI = 'mongodb://aliabbaszounr1:Aliabbas321@cluster1-shard-00-00.rpo2r.mongodb.net:27017,cluster1-shard-00-01.rpo2r.mongodb.net:27017,cluster1-shard-00-02.rpo2r.mongodb.net:27017/whatsapp_sessions?replicaSet=atlas-14bnbx-shard-0&ssl=true&authSource=admin';
 
+// ✅ Rate limiter to prevent abuse
 const sendLimiter = rateLimit({
-  windowMs: 60 * 1000, 
+  windowMs: 60 * 1000,
   max: 10,
   message: '⛔ Too many requests — try again later.'
 });
@@ -36,6 +40,7 @@ const SessionSchema = new mongoose.Schema({
 });
 const Session = mongoose.model('Session', SessionSchema);
 
+// ✅ MongoDB connection
 mongoose.connect(MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
@@ -46,17 +51,14 @@ mongoose.connect(MONGO_URI, {
   console.log('✅ MongoDB connected successfully.');
   initializeClient();
 })
-.catch(err => {
-  console.error('❌ MongoDB connection error:', err);
-});
+.catch(err => console.error('❌ MongoDB connection error:', err));
+
 mongoose.connection.on('disconnected', () => console.warn('⚠️ MongoDB disconnected!'));
 mongoose.connection.on('error', err => console.error('❌ MongoDB error:', err));
 
 const numberCache = new Map();
 async function getCachedNumberId(phone) {
-  if (numberCache.has(phone)) {
-    return numberCache.get(phone);
-  }
+  if (numberCache.has(phone)) return numberCache.get(phone);
   const id = await client.getNumberId(phone);
   numberCache.set(phone, id);
   return id;
@@ -136,7 +138,7 @@ async function initializeClient() {
         reconnecting = false;
         console.log('♻️ Reinitializing client...');
         initializeClient();
-      }, 60 * 1000);
+      }, 60000);
     }
   });
 
@@ -153,30 +155,25 @@ async function initializeClient() {
   client.initialize();
 }
 
+// ✅ Socket.IO
 io.on('connection', socket => {
   console.log('⚡ Client connected via Socket.IO');
   socket.emit('status', { ready: clientReady, apiKey });
   socket.on('disconnect', () => console.log('🔌 Socket disconnected'));
 });
 
+// ✅ API endpoint to send message
 app.post('/send-message', async (req, res) => {
   const { apiKey: key, phoneNumber, message } = req.body;
 
-  if (key !== apiKey) {
-    return res.status(403).json({ success: false, message: '⛔ Invalid API key.' });
-  }
-  if (!clientReady) {
-    return res.status(503).json({ success: false, message: '⚠️ WhatsApp client is not ready.' });
-  }
-  if (!phoneNumber || !message) {
-    return res.status(400).json({ success: false, message: '❌ Phone number and message are required.' });
-  }
+  if (key !== apiKey) return res.status(403).json({ success: false, message: '⛔ Invalid API key.' });
+  if (!clientReady) return res.status(503).json({ success: false, message: '⚠️ WhatsApp client is not ready.' });
+  if (!phoneNumber || !message) return res.status(400).json({ success: false, message: '❌ Phone number and message are required.' });
 
   try {
     const numberId = await getCachedNumberId(phoneNumber);
-    if (!numberId) {
-      return res.status(400).json({ success: false, message: '⚠️ Number is not on WhatsApp.' });
-    }
+    if (!numberId) return res.status(400).json({ success: false, message: '⚠️ Number is not on WhatsApp.' });
+
     const response = await client.sendMessage(numberId._serialized, message);
     res.status(200).json({ success: true, message: '✅ Message sent successfully!', data: response });
   } catch (error) {
@@ -185,6 +182,7 @@ app.post('/send-message', async (req, res) => {
   }
 });
 
+// ✅ Logout endpoint
 app.post('/logout', async (req, res) => {
   try {
     if (client) {
